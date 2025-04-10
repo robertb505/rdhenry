@@ -1,32 +1,34 @@
 const express = require('express');
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const fetch = require('node-fetch');
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Inject branding banner
-const injectBanner = (html) => {
-  const banner = `
-    <div style="position: fixed; top: 0; left: 0; width: 100%; background: #004466; color: white; padding: 12px; z-index: 9999; text-align: center;">
-      Powered by Premier Cabinet Partners – <a href="/" style="color: #00cfff;">Return Home</a>
-    </div>
-  `;
-  return html.replace(/<body[^>]*>/i, match => `${match}${banner}`);
-};
+app.use(express.static('public'));
 
-// Custom proxy with injection
-app.use('/', async (req, res) => {
-  const fetch = await import('node-fetch'); // Use ESM-friendly fetch
-  const targetUrl = `https://www.rdhenry.com${req.url}`;
-  
+app.get('/', async (req, res) => {
+  const targetURL = 'https://www.rdhenry.com/our_brands/revola-frameless/';
+
   try {
-    const proxyRes = await fetch.default(targetUrl);
-    const text = await proxyRes.text();
-    const modified = injectBanner(text);
-    res.send(modified);
+    const response = await fetch(targetURL);
+    let body = await response.text();
+
+    // Inject a branded top bar before the <body> tag
+    const topBarHTML = `
+      <div style="position:fixed;top:0;left:0;width:100%;z-index:9999;background:#003366;color:white;padding:12px;text-align:center;font-family:sans-serif;">
+        🔹 <strong>Premier Cabinet Partners</strong> – Official Rep for RD Henry Products
+      </div>
+      <div style="height:50px;"></div> <!-- Spacer so content isn't hidden -->
+    `;
+
+    // Insert the banner right after <body>
+    body = body.replace(/<body.*?>/, match => `${match}${topBarHTML}`);
+
+    res.send(body);
   } catch (err) {
-    res.status(500).send("Proxy error.");
+    res.status(500).send('Error fetching page');
   }
 });
 
-app.listen(3000, () => {
-  console.log('Proxy server running at http://localhost:3000');
+app.listen(PORT, () => {
+  console.log(`Proxy server running at http://localhost:${PORT}`);
 });
