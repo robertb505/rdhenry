@@ -6,7 +6,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
 
 app.get('/', async (req, res) => {
-  const targetURL = 'https://www.rdhenry.com/our_brands/revola-frameless/';
+  const targetURL = 'https://www.rdhenry.com/';
 
   try {
     const response = await fetch(targetURL);
